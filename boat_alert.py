@@ -1,56 +1,63 @@
 import requests
+from bs4 import BeautifulSoup
 import os
+import re
 
 TOKEN = os.environ["TOKEN"]
 CHAT_ID = os.environ["CHAT_ID"]
 
-# -------------------
-# レース情報（ここを書き換える）
-# -------------------
+# 対象場
+TARGET_PLACES = {
+    "戸田": "01",
+    "平和島": "04",
+    "江戸川": "03",
+    "鳴門": "14"
+}
 
-place = "江戸川"
+message_list = []
 
-wind = 6          # 風速
-wave = 7          # 波高
+for place, code in TARGET_PLACES.items():
 
-st1 = 0.18        # 1号艇ST
-st4 = 0.11        # 4号艇ST
+    url = f"https://www.boatrace.jp/owpc/pc/race/index?jcd={code}"
 
-motor1 = 32       # 1号艇モーター2連率
+    try:
 
-race_type = "一般戦"
+        html = requests.get(url).text
 
-# -------------------
-# 条件判定
-# -------------------
+        soup = BeautifulSoup(html, "html.parser")
 
-target_places = ["戸田", "平和島", "江戸川", "鳴門"]
+        text = soup.get_text()
 
-if (
-    place in target_places
-    and wind >= 5
-    and wave >= 5
-    and st1 >= 0.17
-    and st4 <= 0.13
-    and motor1 <= 35
-    and race_type == "一般戦"
-):
+        # 風速取得
+        wind_match = re.search(r"風速\s*(\d+)m", text)
 
-    message = f"""
-【荒れ条件一致】
+        # 波高取得
+        wave_match = re.search(r"波高\s*(\d+)cm", text)
 
-開催場：{place}
+        if wind_match and wave_match:
 
-風速：{wind}m
-波高：{wave}cm
+            wind = int(wind_match.group(1))
+            wave = int(wave_match.group(1))
 
-1号艇ST：{st1}
-4号艇ST：{st4}
+            # 条件
+            if wind >= 5 and wave >= 5:
 
-1号艇モーター：{motor1}%
+                message_list.append(
+                    f"【荒れ注意】\n"
+                    f"{place}\n"
+                    f"風速 {wind}m\n"
+                    f"波高 {wave}cm"
+                )
 
-4カド警戒
-"""
+    except Exception as e:
+
+        print(f"{place} エラー")
+        print(e)
+
+# 通知
+if message_list:
+
+    message = "\n\n".join(message_list)
 
     send_url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
 
@@ -63,4 +70,4 @@ if (
 
 else:
 
-    print("条件不一致")
+    print("該当なし")

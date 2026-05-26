@@ -1,7 +1,8 @@
 import requests
+import os
 
-TOKEN = "8823566099:AAGBII903fAEktPbev36Ab9B2dxEZVdcWs8"
-CHAT_ID = "8577373625"
+TOKEN = os.environ["TOKEN"]
+CHAT_ID = os.environ["CHAT_ID"]
 
 # -------------------
 # レース情報（ここを書き換える）

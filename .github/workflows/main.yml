@@ -3,7 +3,6 @@ name: Boat Alert
 on:
   schedule:
     - cron: '*/10 * * * *'
-
   workflow_dispatch:
 
 jobs:
@@ -23,7 +22,7 @@ jobs:
         run: pip install requests beautifulsoup4
 
       - name: Run bot
-        run: python boat_alert.py
         env:
           TOKEN: ${{ secrets.TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
+        run: python boat_alert.py
